@@ -1,0 +1,136 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.1.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 3c97bbac365122b6efda39ef2169a1e23ef453d73bea6cc9a22fff2bf214a7f9
+
+name:           fl2020-spbu-spr
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://https://github.com/kajigor/fl-2020-spbu-spr>
+homepage:       https://github.com/kajigor/fl-2020-spbu-spr#readme
+bug-reports:    https://github.com/kajigor/fl-2020-spbu-spr/issues
+author:         Ekaterina Verbitskaia
+maintainer:     kajigor@gmail.com
+copyright:      2020 Ekaterina Verbitskaia
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/kajigor/fl-2020-spbu-spr
+
+library
+  exposed-modules:
+      Arith
+      DigitSum
+      Polish
+      Sum
+  other-modules:
+      Paths_fl2020_spbu_spr
+  hs-source-dirs:
+      src
+  build-depends:
+      HUnit
+    , base >=4.7 && <5
+    , hedgehog
+    , tasty
+    , tasty-discover
+    , tasty-hedgehog
+    , tasty-hunit
+  default-language: Haskell2010
+
+executable arith
+  main-is: Main.hs
+  other-modules:
+      Paths_fl2020_spbu_spr
+  hs-source-dirs:
+      app/arith
+  build-depends:
+      HUnit
+    , base >=4.7 && <5
+    , fl2020-spbu-spr
+    , hedgehog
+    , tasty
+    , tasty-discover
+    , tasty-hedgehog
+    , tasty-hunit
+  default-language: Haskell2010
+
+executable digitSum
+  main-is: Main.hs
+  other-modules:
+      Paths_fl2020_spbu_spr
+  hs-source-dirs:
+      app/digitSum
+  build-depends:
+      HUnit
+    , base >=4.7 && <5
+    , fl2020-spbu-spr
+    , hedgehog
+    , tasty
+    , tasty-discover
+    , tasty-hedgehog
+    , tasty-hunit
+  default-language: Haskell2010
+
+executable polish
+  main-is: Main.hs
+  other-modules:
+      Paths_fl2020_spbu_spr
+  hs-source-dirs:
+      app/polish
+  build-depends:
+      HUnit
+    , base >=4.7 && <5
+    , fl2020-spbu-spr
+    , hedgehog
+    , tasty
+    , tasty-discover
+    , tasty-hedgehog
+    , tasty-hunit
+  default-language: Haskell2010
+
+executable sum
+  main-is: Main.hs
+  other-modules:
+      Paths_fl2020_spbu_spr
+  hs-source-dirs:
+      app/sum
+  build-depends:
+      HUnit
+    , base >=4.7 && <5
+    , fl2020-spbu-spr
+    , hedgehog
+    , tasty
+    , tasty-discover
+    , tasty-hedgehog
+    , tasty-hunit
+  default-language: Haskell2010
+
+test-suite test
+  type: exitcode-stdio-1.0
+  main-is: Test.hs
+  other-modules:
+      Test.Arith
+      Test.DigitSum
+      Test.Polish
+      Test.Sum
+      Paths_fl2020_spbu_spr
+  hs-source-dirs:
+      test
+  build-depends:
+      HUnit
+    , base >=4.7 && <5
+    , fl2020-spbu-spr
+    , hedgehog
+    , tasty
+    , tasty-discover
+    , tasty-hedgehog
+    , tasty-hunit
+  default-language: Haskell2010
