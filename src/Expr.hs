@@ -1,9 +1,10 @@
 module Expr where
 
 import           AST         (AST (..), Operator (..))
-import           Combinators (Parser (..), Result (..), bind', elem', fail',
-                              fmap', satisfy, some', success)
+import           Combinators (Parser (..), Result (..), elem', fail',
+                              satisfy, success, symbol)
 import           Data.Char   (digitToInt, isDigit)
+import Control.Applicative
 
 data Associativity
   = LeftAssoc  -- 1 @ 2 @ 3 @ 4 = (((1 @ 2) @ 3) @ 4)
@@ -16,27 +17,45 @@ uberExpr :: Monoid e
          -> Parser e i ast -- парсер для элементарного выражения
          -> (op -> ast -> ast -> ast) -- функция для создания абстрактного синтаксического дерева для бинарного оператора
          -> Parser e i ast
-uberExpr = error "uberExpr undefined"
+uberExpr ((pars, as):parsers) basicParser makeAST = case as of
+    NoAssoc    -> do
+        left  <- getTail
+        prs   <- pars
+        right <- getTail
+        return (makeAST prs left right)
+      <|> getTail
+    LeftAssoc  -> do
+        (beg, end) <- fmap (,) getTail <*> (many $ fmap (,) pars <*> getTail)
+        return (foldl (\le (op, ri) -> makeAST op le ri) beg end)
+    RightAssoc  -> do
+        (beg, end) <- fmap (,) (many $ fmap (,) getTail <*> pars) <*> getTail
+        return (foldr (\(le, op) ri -> makeAST op le ri) end beg)
+ 
+  where getTail = uberExpr parsers basicParser makeAST
+        
+uberExpr [] x _ = x
 
 -- Парсер для выражений над +, -, *, /, ^ (возведение в степень)
 -- с естественными приоритетами и ассоциативностью над натуральными числами с 0.
 -- В строке могут быть скобки
 parseExpr :: Parser String String AST
-parseExpr = error "parseExpr undefined"
+parseExpr = uberExpr [(make '+' <|> make '-', LeftAssoc), (make '*' <|> make '/', LeftAssoc), (make '^', RightAssoc)]
+                     (fmap Num parseNum <|> symbol '(' *> parseExpr <* symbol ')') BinOp
+    where make c = symbol c >>= toOperator
 
 -- Парсер для целых чисел
 parseNum :: Parser String String Int
-parseNum = foldl (\acc d -> 10 * acc + digitToInt d) 0 `fmap'` go
+parseNum = foldl (\acc d -> 10 * acc + digitToInt d) 0 `fmap` go
   where
     go :: Parser String String String
-    go = some' (satisfy isDigit)
+    go = some (satisfy isDigit)
 
 parseIdent :: Parser String String String
 parseIdent = error "parseIdent undefined"
 
 -- Парсер для операторов
 parseOp :: Parser String String Operator
-parseOp = elem' `bind'` toOperator
+parseOp = elem' >>= toOperator
 
 -- Преобразование символов операторов в операторы
 toOperator :: Char -> Parser String String Operator
@@ -44,6 +63,7 @@ toOperator '+' = success Plus
 toOperator '*' = success Mult
 toOperator '-' = success Minus
 toOperator '/' = success Div
+toOperator '^' = success Pow
 toOperator _   = fail' "Failed toOperator"
 
 evaluate :: String -> Maybe Int
@@ -58,4 +78,5 @@ compute (BinOp Plus x y)  = compute x + compute y
 compute (BinOp Mult x y)  = compute x * compute y
 compute (BinOp Minus x y) = compute x - compute y
 compute (BinOp Div x y)   = compute x `div` compute y
+compute (BinOp Pow x y)   = (compute x) ^ (compute y)
 
