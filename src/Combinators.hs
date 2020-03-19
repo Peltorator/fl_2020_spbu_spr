@@ -67,9 +67,21 @@ sepBy1 sep elem = fmap (:) elem <*> (many (sep *> elem))
 symbol :: Char -> Parser String String Char
 symbol c = satisfy (== c)
 
+symbols :: String -> Parser String String String
+symbols [] = success ""
+symbols (x:xs) = do
+    y  <- symbol  x
+    ys <- symbols xs
+    return (y:ys)
+    
+
 -- Успешно завершается, если последовательность содержит как минимум один элемент
 elem' :: (Show a) => Parser String [a] a
 elem' = satisfy (const True)
+
+elems :: [String] -> Parser String String String
+elems [] = Parser ((flip Success) "")
+elems (x:xs) = symbols x <|> elems xs
 
 -- Проверяет, что первый элемент входной последовательности удовлетворяет предикату
 satisfy :: Show a => (a -> Bool) -> Parser String [a] a

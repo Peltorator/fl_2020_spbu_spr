@@ -1,9 +1,9 @@
 module Expr where
 
 import           AST         (AST (..), Operator (..))
-import           Combinators (Parser (..), Result (..), elem', fail',
-                              satisfy, success, symbol)
-import           Data.Char   (digitToInt, isDigit)
+import           Combinators (Parser (..), Result (..), elem', elems, fail',
+                              satisfy, success, symbol, symbols)
+import           Data.Char   (digitToInt, isDigit, isLetter)
 import Control.Applicative
 
 data Associativity
@@ -39,32 +39,49 @@ uberExpr [] x _ = x
 -- с естественными приоритетами и ассоциативностью над натуральными числами с 0.
 -- В строке могут быть скобки
 parseExpr :: Parser String String AST
-parseExpr = uberExpr [(make '+' <|> make '-', LeftAssoc), (make '*' <|> make '/', LeftAssoc), (make '^', RightAssoc)]
-                     (fmap Num parseNum <|> symbol '(' *> parseExpr <* symbol ')') BinOp
-    where make c = symbol c >>= toOperator
+parseExpr = uberExpr [
+                        (make "||", RightAssoc), (make "&&", RightAssoc),
+                        (make "==" <|> make "/=" <|> make "<=" <|> make "<" <|> make ">=" <|> make ">", NoAssoc),
+                        (make "+" <|> make "-", LeftAssoc), (make "*" <|> make "/", LeftAssoc), (make "^", RightAssoc)
+                     ]
+                     (fmap Num parseNum <|> fmap Ident parseIdent <|> symbol '(' *> parseExpr <* symbol ')') BinOp
+    where make c = symbols c >>= toOperator
 
 -- Парсер для целых чисел
 parseNum :: Parser String String Int
-parseNum = foldl (\acc d -> 10 * acc + digitToInt d) 0 `fmap` go
+parseNum = foldl f 0 `fmap` go
   where
+    f x '-' = -x
+    f x y   = 10 * x + digitToInt y
     go :: Parser String String String
-    go = some (satisfy isDigit)
+    go = some (satisfy isDigit) <|> (fmap (\a b -> b ++ a) (many (symbol '-')) <*> some (satisfy isDigit))
 
 parseIdent :: Parser String String String
-parseIdent = error "parseIdent undefined"
+parseIdent = do
+    hd <- (satisfy isLetter) <|> (symbol '_')
+    tl <- many $ (satisfy isLetter) <|> (satisfy isDigit) <|> (symbol '_')
+    return (hd:tl)
 
 -- Парсер для операторов
 parseOp :: Parser String String Operator
-parseOp = elem' >>= toOperator
+parseOp = elems ["||", "&&", ">", ">=", "<", "<=", "/=", "==", "+", "-", "*", "/", "^"]  >>= toOperator
 
 -- Преобразование символов операторов в операторы
-toOperator :: Char -> Parser String String Operator
-toOperator '+' = success Plus
-toOperator '*' = success Mult
-toOperator '-' = success Minus
-toOperator '/' = success Div
-toOperator '^' = success Pow
-toOperator _   = fail' "Failed toOperator"
+toOperator :: String -> Parser String String Operator
+toOperator "+"  = success Plus
+toOperator "*"  = success Mult
+toOperator "-"  = success Minus
+toOperator "/"  = success Div
+toOperator "^"  = success Pow
+toOperator "==" = success Equal
+toOperator "/=" = success Nequal
+toOperator "<=" = success Le
+toOperator "<"  = success Lt
+toOperator ">=" = success Ge
+toOperator ">"  = success Gt
+toOperator "&&" = success And
+toOperator "||" = success Or
+toOperator _    = fail' "Failed toOperator"
 
 evaluate :: String -> Maybe Int
 evaluate input = do
@@ -72,11 +89,22 @@ evaluate input = do
     Success rest ast | null rest -> return $ compute ast
     _                            -> Nothing
 
-compute :: AST -> Int
-compute (Num x)           = x
-compute (BinOp Plus x y)  = compute x + compute y
-compute (BinOp Mult x y)  = compute x * compute y
-compute (BinOp Minus x y) = compute x - compute y
-compute (BinOp Div x y)   = compute x `div` compute y
-compute (BinOp Pow x y)   = (compute x) ^ (compute y)
 
+hlp True = 1
+hlp False = 0
+
+compute :: AST -> Int
+compute (Num x)            = x
+compute (BinOp Plus x y)   = compute x + compute y
+compute (BinOp Mult x y)   = compute x * compute y
+compute (BinOp Minus x y)  = compute x - compute y
+compute (BinOp Div x y)    = compute x `div` compute y
+compute (BinOp Pow x y)    = (compute x) ^ (compute y)
+compute (BinOp Equal x y)  = hlp ((compute x) == (compute y))
+compute (BinOp Nequal x y) = hlp ((compute x) /= (compute y))
+compute (BinOp Le x y)     = hlp ((compute x) <= (compute y))
+compute (BinOp Lt x y)     = hlp ((compute x) < (compute y))
+compute (BinOp Ge x y)     = hlp ((compute x) >= (compute y))
+compute (BinOp Gt x y)     = hlp ((compute x) > (compute y))
+compute (BinOp And x y)    = (compute x) * (compute y)
+compute (BinOp Or x y)     = let frst = compute x in if frst == 0 then compute y else frst
