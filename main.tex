@@ -1,0 +1,204 @@
+\documentclass[12pt]{article}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm,bindingoffset=0cm]{geometry}
+\usepackage[utf8x]{inputenc}
+\usepackage[english,russian]{babel}
+\usepackage{cmap}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{url}
+\usepackage{pifont}
+\usepackage{tikz}
+\usepackage{verbatim}
+
+\usetikzlibrary{shapes,arrows}
+\usetikzlibrary{positioning,automata}
+\tikzset{every state/.style={minimum size=0.2cm},
+initial text={}
+}
+
+
+\newenvironment{myauto}[1][3]
+{
+  \begin{center}
+    \begin{tikzpicture}[> = stealth,node distance=#1cm, on grid, very thick]
+}
+{
+    \end{tikzpicture}
+  \end{center}
+}
+
+
+
+\begin{document}
+
+\begin{section}{Язычок}
+    См. peLLang.md
+\end{section}
+
+\begin{section}{Нормальная форма Хохомского}
+    / Жирный шрифт отображает изменения, но $\varepsilon$ и тд сделать жирными у меня не получилось к сожалению /
+
+\
+
+    Было:
+
+    S $\to$ RS | R
+    
+    R $\to$ aSb | cRd | ab | cd | $\varepsilon$
+
+    \
+
+    Проведем нормализацию.
+    Уберем правила, в которых есть и терминалы, и нетерминалы:
+
+    S $\to$ RS | R
+    
+    R $\to$ \textbf{A}S\textbf{B} | \textbf{C}R\textbf{D} | \textbf{AB} | \textbf{CD} | $\varepsilon$
+
+    \textbf{A $\to$ a}
+
+    \textbf{B $\to$ b}
+
+    \textbf{C $\to$ c}
+
+    \textbf{D $\to$ d}
+
+
+\
+
+    Теперь надо выгнать длинные правила, разбив их на кусочки:
+
+    S $\to$ RS | R
+    
+    R $\to$ \textbf{X}B | \textbf{Y}D | AB | CD | $\varepsilon$
+
+    \textbf{X $\to$ AS}
+
+    \textbf{Y $\to$ CR}
+
+    A $\to$ a
+
+    B $\to$ b
+
+    C $\to$ c
+
+    D $\to$ d
+
+\
+
+    S $\to$ R $\to \varepsilon$, так что надо добавить правило \textbf{S} $\to \varepsilon$, а также распространить это на X и Y:
+
+    X $\to$ AS \textbf{| A}
+    
+    Y $\to$ CR \textbf{| C}
+
+\
+
+    Теперь можно можно удалить $\varepsilon$-правила, но также можно заметить, что правило X $\to$ A не нужно, потому что S
+    все еще можно превратить в $\varepsilon$:
+
+
+    S $\to$ RS | R | $\varepsilon$
+    
+    R $\to$ XB | YD | AB | CD
+
+    X $\to$ AS
+
+    Y $\to$ CR | C
+
+    A $\to$ a
+
+    B $\to$ b
+
+    C $\to$ c
+
+    D $\to$ d
+
+
+\
+
+    Нам нельзя иметь стартовое в правой части, так что делаем новое стартовое S':
+
+    \textbf{S' $\to$ S | $\varepsilon$}
+
+    S $\to$ RS | R
+    
+    R $\to$ XB | YD | AB | CD
+
+    X $\to$ AS
+
+    Y $\to$ CR | C
+
+    A $\to$ a
+
+    B $\to$ b
+
+    C $\to$ c
+
+    D $\to$ d
+
+\
+
+    От правил вида M $\to$ N нужно тоже избавиться по принципу распространения правил:
+
+
+    S' $\to$   \textbf{RS | XB | YD | AB | CD} | $\varepsilon$
+
+    S $\to$ RS | \textbf{XB | YD | AB | CD}
+    
+    R $\to$ XB | YD | AB | CD
+
+    X $\to$ AS
+
+    Y $\to$ CR | \textbf{c}
+
+    A $\to$ a
+
+    B $\to$ b
+
+    C $\to$ c
+
+    D $\to$ d
+
+
+\
+
+    Это и будет финальным результатом.
+
+\end{section}
+
+
+\begin{section}{CS:GO язык}
+    
+    Чтобы доказать, что он КС, построим автомат:
+
+\begin{myauto}
+    \node[state,initial]   (s)              {$S$};
+    \node[state]           (p) [below=of s] {$P$};
+    \node[state,accepting] (q) [left=of  p] {$Q$};
+    \node[state]           (x) [right=of s] {$X$};
+    \node[state,accepting] (y) [below=of x] {$Y$};
+    \node[state,accepting] (t) [right=of x] {$T$};
+    \node[state]           (z) [right=of y] {$Z$};
+
+    \path[->] (s) edge node [left]  {$b$} (p)
+              (p) edge node [above] {$b$} (q)
+              (q) edge node [above] {$b$} (p)
+              (s) edge node [above] {$a$} (x)
+              (x) edge node [above] {$b$} (t)
+              (x) edge node [left]  {$a$} (y)
+              (y) edge node [left]  {$a$} (x)
+              (y) edge node [above] {$b$} (z)
+              (z) edge node [left]  {$b$} (t)
+              (t) edge node [left]  {$b$} (z)
+    ;
+    \end{myauto}
+    
+    Q отвечает за строки вида $b^{2k}$, где $k > 0$. Y отвечает за строки вида $a^{2k}$, где $k > 0$.
+    T отвечает за строки, в которых есть и $a$, и $b$.
+
+\end{section}
+
+\label{LastPage}
+\end{document}
+
