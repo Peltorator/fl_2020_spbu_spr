@@ -24,8 +24,8 @@ Some examples of incorrect numbers:
 
 ## Variables
 
-A name of a variable can be any non-empty sequence of lower and upper case letters, digits and underscores (`_`) which can't start with a digit.
-Also a name of a variable can't be one of keywords of peLLang (we'll discuss them later).
+The name of a variable can be any non-empty sequence of lower and upper case letters, digits and underscores (`_`) which can't start with a digit.
+Also, the name of a variable can't be one of the keywords of peLLang (we'll discuss them later).
 
 Some examples:
 
@@ -88,7 +88,7 @@ while           | `while (expr) instruct`
 read            | `read var`
 print           | `print (expr)`
 
-Correct code should be constructed from theese instructions recursively. Also `{}` must be present at the top level.
+The correct code should be constructed from these instructions recursively. Also `{}` must be present at the top level.
 Note that you must assign a variable before using it.
 
 Some examples:
@@ -103,3 +103,4 @@ Some incorrect examples:
 
 
 If you have any questions you can text me on Telegram: @peltorator.
+
