@@ -1,5 +1,7 @@
 # peLLang documentation (by Peltorator)
 
+![Image description](logo.png)
+
 This is the first part of the official documentation of the peLLang programming language. At this moment there is no compiler or interpreter. You can compile it with your eyes. Stay tuned! You can become my patron on Patreon if you want this language to be released ASAP.
 
 ## Spaces
