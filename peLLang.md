@@ -29,7 +29,7 @@ Also a name of a variable can't be one of keywords of peLLang (we'll discuss the
 
 Some examples:
 
-- `peltortor`
+- `peltorator`
 - `Peltorator`
 - `imp`
 - `drozd`
@@ -49,8 +49,8 @@ Basic expression is a number or a variable. Expressions are constructed from bas
 
 Operator | Example       | Associativity | Priority | Comment
 ---------|---------------|---------------|----------|--------
- `\|\|`  | `x \|\|` y    | Right         | 1        |
- `&&`    | `x && y`      | Right         | 1        | As you can see `\|\|` and `&&` have equal priority. It's because I think that mixed use of them makes it difficult to read code
+ `\|\|`  | `x \|\| y`    | Right         | 1        |
+ `&&`    | `x && y`      | Right         | 1        | As you can see, `\|\|` and `&&` have equal priority. It's because I think that mixed use of them makes it difficult to read someone's code.
  `==`    | `x == y`      | No            | 2        | We don't have bools, so the result is `0` or `1`.
  `!=`    | `x != y`      | No            | 2        | We don't have bools, so the result is `0` or `1`.
  `<`     | `x < y`       | No            | 2        | We don't have bools, so the result is `0` or `1`.
@@ -60,9 +60,9 @@ Operator | Example       | Associativity | Priority | Comment
  `+`     | `x + y`       | Left          | 3        |
  `-`     | `x - y`       | Left          | 3        |
  `*`     | `x * y`       | Left          | 4        |
- `/`     | `x / y`       | Left          | 4        |
+ `/`     | `x / y`       | Left          | 4        | Rounding to zero.
  `^`     | `x ^ y`       | Left          | 5        |
- `-`     | `-x`          | Right         | 6        | It's unary minus. As you can see, it's priority is greater than `^`, so `-2^2 = 4`
+ `-`     | `-x`          | Right         | 6        | It's unary minus. As you can see, it's priority is greater than `^`, so `-3^2 = 9`.
 
 Some examples:
 
