@@ -66,6 +66,13 @@ parseIdent = do
 parseOp :: Parser String String Operator
 parseOp = elems ["||", "&&", ">", ">=", "<", "<=", "/=", "==", "+", "-", "*", "/", "^"]  >>= toOperator
 
+parseExactly :: String -> Parser String String String
+parseExactly = foldr (\hd tl -> fmap (:) (symbol hd) <*> tl) $ pure ""
+
+parseSpaces :: Parser String String String
+parseSpaces = many $ symbol ' ' <|> symbol '\n'
+
+
 -- Преобразование символов операторов в операторы
 toOperator :: String -> Parser String String Operator
 toOperator "+"  = success Plus
