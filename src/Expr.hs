@@ -12,44 +12,58 @@ data Associativity
   | NoAssoc    -- Может быть только между двумя операндами: 1 @ 2 -- oк; 1 @ 2 @ 3 -- не ок
 
 -- Универсальный парсер выражений
+data OpType = Binary Associativity
+            | Unary
+
 uberExpr :: Monoid e
-         => [(Parser e i op, Associativity)] -- список парсеров бинарных операторов с ассоциативностями в порядке повышения приоритета
-         -> Parser e i ast -- парсер для элементарного выражения
-         -> (op -> ast -> ast -> ast) -- функция для создания абстрактного синтаксического дерева для бинарного оператора
+         => [(Parser e i op, OpType)] -- список операций с их арностью и, в случае бинарных, ассоциативностью
+         -> Parser e i ast            -- парсер элементарного выражения
+         -> (op -> ast -> ast -> ast) -- конструктор узла дерева для бинарной операции
+         -> (op -> ast -> ast)        -- конструктор узла для унарной операции
          -> Parser e i ast
-uberExpr ((pars, as):parsers) basicParser makeAST = case as of
-    NoAssoc    -> do
+uberExpr ((pars, as):parsers) basicParser makeAST makeASTU = (case as of
+    Binary NoAssoc    -> do
         left  <- getTail
         prs   <- pars
         right <- getTail
         return (makeAST prs left right)
       <|> getTail
-    LeftAssoc  -> do
+    Binary LeftAssoc  -> do
         (beg, end) <- fmap (,) getTail <*> (many $ fmap (,) pars <*> getTail)
         return (foldl (\le (op, ri) -> makeAST op le ri) beg end)
-    RightAssoc  -> do
+    Binary RightAssoc  -> do
         (beg, end) <- fmap (,) (many $ fmap (,) getTail <*> pars) <*> getTail
         return (foldr (\(le, op) ri -> makeAST op le ri) end beg)
+    Unary             -> fmap makeASTU pars <*> getTail
+    ) <|> getTail
  
-  where getTail = uberExpr parsers basicParser makeAST
+  where getTail = uberExpr parsers basicParser makeAST makeASTU
         
-uberExpr [] x _ = x
+uberExpr [] x _ _ = x
 
 -- Парсер для выражений над +, -, *, /, ^ (возведение в степень)
 -- с естественными приоритетами и ассоциативностью над натуральными числами с 0.
 -- В строке могут быть скобки
 parseExpr :: Parser String String AST
 parseExpr = uberExpr [
-                        (make "||", RightAssoc), (make "&&", RightAssoc),
-                        (make "==" <|> make "/=" <|> make "<=" <|> make "<" <|> make ">=" <|> make ">", NoAssoc),
-                        (make "+" <|> make "-", LeftAssoc), (make "*" <|> make "/", LeftAssoc), (make "^", RightAssoc)
+                        (make "||", Binary RightAssoc), (make "&&", Binary RightAssoc), (make "!", Unary),
+                        (make "==" <|> make "/=" <|> make "<=" <|> make "<" <|> make ">=" <|> make ">", Binary NoAssoc),
+                        (make "+" <|> make "-", Binary LeftAssoc), (make "*" <|> make "/", Binary LeftAssoc),
+                        (make "-", Unary), (make "^", Binary RightAssoc)
                      ]
-                     (fmap Num parseNum <|> fmap Ident parseIdent <|> symbol '(' *> parseExpr <* symbol ')') BinOp
+                     (fmap Num parseNum <|> fmap Ident parseIdent <|> symbol '(' *> parseExpr <* symbol ')') BinOp UnaryOp
     where make c = symbols c >>= toOperator
 
--- Парсер для целых чисел
+
 parseNum :: Parser String String Int
-parseNum = foldl f 0 `fmap` go
+parseNum = fmap (foldl f 0) (some (satisfy isDigit))
+  where
+    f x y = 10 * x + digitToInt y
+
+
+-- Парсер для целых чисел
+parseNegNum :: Parser String String Int
+parseNegNum = fmap (foldl f 0) go
   where
     f x '-' = -x
     f x y   = 10 * x + digitToInt y
@@ -64,7 +78,7 @@ parseIdent = do
 
 -- Парсер для операторов
 parseOp :: Parser String String Operator
-parseOp = elems ["||", "&&", ">", ">=", "<", "<=", "/=", "==", "+", "-", "*", "/", "^"]  >>= toOperator
+parseOp = elems ["||", "&&", ">", ">=", "<", "<=", "/=", "==", "+", "-", "*", "/", "^", "!"]  >>= toOperator
 
 parseExactly :: String -> Parser String String String
 parseExactly = foldr (\hd tl -> fmap (:) (symbol hd) <*> tl) $ pure ""
@@ -88,6 +102,7 @@ toOperator ">=" = success Ge
 toOperator ">"  = success Gt
 toOperator "&&" = success And
 toOperator "||" = success Or
+toOperator "!"  = success Not
 toOperator _    = fail' "Failed toOperator"
 
 evaluate :: String -> Maybe Int
@@ -115,3 +130,5 @@ compute (BinOp Ge x y)     = hlp ((compute x) >= (compute y))
 compute (BinOp Gt x y)     = hlp ((compute x) > (compute y))
 compute (BinOp And x y)    = (compute x) * (compute y)
 compute (BinOp Or x y)     = let frst = compute x in if frst == 0 then compute y else frst
+compute (UnaryOp Minus x)  = -(compute x)
+compute (UnaryOp Not x)    = if compute x == 0 then 1 else 0
