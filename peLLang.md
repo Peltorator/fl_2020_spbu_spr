@@ -81,7 +81,7 @@ Some incorrect examples:
 In `if` and `while` instructions `0` is `false` and all other numbers are `true`.
 
 Instruction     | Example                                       | Notes
-----------------|------------------------------------------------------
+----------------|-----------------------------------------------|--------------------------------------------------------------
 assign          | `assign var (expr)`                           | You should put at least one space symbol after `asign` word.
 if              | `if (expr) { instruct } else { instruct }`    |
 `{}`            | `{ instruct_1; instruct_2; ... instruct_i; }` |
