@@ -23,9 +23,9 @@ unit_parseExprInBrackets = do
 
 unit_parseIf :: Assertion
 unit_parseIf = do
-    runParser parseIf "if (x==7) { print (8); print (x); } \n \n else {\nprint(2);}" @?= Success "" 
+    runParser parseIf "if (   x    ==    \n\n\n 7) { print (8); print (x); } \n \n else {\nprint(2);}" @?= Success "" 
         (If (BinOp Equal (Ident "x") (Num 7)) (Seq [Write (Num 8), Write (Ident "x")]) (Seq [Write (Num 2)]))
-    runParser parseIf "if (x==7) { print (8); print (x); } else {}" @?= Success "" 
+    runParser parseIf "if (x  ==  7) { print (8); print (x); } else {}" @?= Success "" 
         (If (BinOp Equal (Ident "x") (Num 7)) (Seq [Write (Num 8), Write (Ident "x")]) (Seq []))
     assertBool "" $ isFailure (runParser parseIf "print (8)")
     assertBool "" $ isFailure (runParser parseIf "if () { print (8); } else { print (9); }")
@@ -51,6 +51,7 @@ unit_parseAssign = do
     assertBool "" $ isFailure (runParser parseAssign "print (8)")
     assertBool "" $ isFailure (runParser parseAssign "assign 0 (_)")
     assertBool "" $ isFailure (runParser parseAssign "assign 0 _")
+    assertBool "" $ isFailure (runParser parseAssign "assignx (0)")
     assertBool "" $ isFailure (runParser parseAssign "assign _ 0")
 
 unit_parseRead :: Assertion
@@ -61,13 +62,14 @@ unit_parseRead = do
         (Read "lol_1_2_3__")
     assertBool "" $ isFailure (runParser parseRead "print (8)")
     assertBool "" $ isFailure (runParser parseRead "read 0")
+    assertBool "" $ isFailure (runParser parseRead "readx")
     assertBool "" $ isFailure (runParser parseRead "read ( _ )")
 
 unit_parseWrite :: Assertion
 unit_parseWrite = do
     runParser parseWrite "print (_)" @?= Success "" 
         (Write (Ident "_"))
-    runParser parseWrite "print     \n  \n    (lol_1_2_3__+12)" @?= Success "" 
+    runParser parseWrite "print     \n  \n    (    \n \n lol_1_2_3__  \n  +   \n    12     )" @?= Success "" 
         (Write (BinOp Plus (Ident "lol_1_2_3__") (Num 12)))
     assertBool "" $ isFailure (runParser parseWrite "read (_)")
     assertBool "" $ isFailure (runParser parseWrite "print 0")
@@ -90,7 +92,7 @@ unit_parseSeq = do
 unit_parseL :: Assertion
 unit_parseL = do
     runParser parseL 
-       "  { \n\n\n   print (5);  \n  read x;   read y;  if (  (x==5||1)  ) { print (2); } else { while (1) { print (3);  \n }; }; } "
+       "  { \n\n\n   print (5);  \n  read x;   read y;  if (  (x   ==   5  ||   1  \n )  ) { print (2); } else { while (1) { print (3);  \n }; }; } "
        @?= Success "" (Seq [Write (Num 5), Read "x", Read "y",
                If (BinOp Or (BinOp Equal (Ident "x") (Num 5)) (Num 1)) (Seq [Write (Num 2)]) (Seq [While (Num 1) (Seq [Write (Num 3)])])
            ])

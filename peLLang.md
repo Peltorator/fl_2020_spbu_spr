@@ -80,14 +80,15 @@ Some incorrect examples:
 
 In `if` and `while` instructions `0` is `false` and all other numbers are `true`.
 
-Instruction     | Example
-----------------|---------
-assign          | `assign var (expr)`
-if              | `if (expr) { instruct } else { instruct }`
-`{}`            | `{ instruct_1; instruct_2; ... instruct_i; }`
-while           | `while (expr) instruct`
-read            | `read var`
-print           | `print (expr)`
+Instruction     | Example                                       | Notes
+----------------|------------------------------------------------------
+assign          | `assign var (expr)`                           | You should put at least one space symbol after `asign` word.
+if              | `if (expr) { instruct } else { instruct }`    |
+`{}`            | `{ instruct_1; instruct_2; ... instruct_i; }` |
+while           | `while (expr) instruct`                       |
+read            | `read var`                                    | You should put at least one space symbol after `read` word.
+print           | `print (expr)`                                |
+
 
 The correct code should be constructed from these instructions recursively. Also `{}` must be present at the top level.
 Note that if you didn't assign a variable, then it's value is equal to zero.

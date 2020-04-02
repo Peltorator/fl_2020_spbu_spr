@@ -2,7 +2,7 @@ module LLang where
 
 import AST (AST (..), Operator (..))
 import Combinators (Parser (..))
-import Expr (parseExpr, parseNum, parseIdent, parseOp, parseExactly, parseSpaces)
+import Expr (parseExpr, parseNum, parseIdent, parseOp, parseExactly, parseSpaces, parseSomeSpaces)
 import Control.Applicative
 
 type Expr = AST
@@ -68,7 +68,7 @@ parseWhile = do
 parseAssign :: CodeParser
 parseAssign = do
     parseExactly "assign"
-    parseSpaces
+    parseSomeSpaces
     var <- parseIdent
     expr <- parseExprInBrackets
     return $ Assign var expr
@@ -76,7 +76,7 @@ parseAssign = do
 parseRead :: CodeParser
 parseRead = do
     parseExactly "read"
-    parseSpaces
+    parseSomeSpaces
     var <- parseIdent
     return $ Read var
 
