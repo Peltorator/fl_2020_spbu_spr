@@ -51,8 +51,9 @@ parseExpr = uberExpr [
                         (make "+" <|> make "-", Binary LeftAssoc), (make "*" <|> make "/", Binary LeftAssoc),
                         (make "-", Unary), (make "^", Binary RightAssoc)
                      ]
-                     (fmap Num parseNum <|> fmap Ident parseIdent <|> symbol '(' *> parseExpr <* symbol ')') BinOp UnaryOp
+                     (func (fmap Num parseNum) <|> func (fmap Ident parseIdent) <|> func (symbol '(' *> parseExpr <* symbol ')')) BinOp UnaryOp
     where make c = symbols c >>= toOperator
+          func f = parseSpaces *> f <* parseSpaces
 
 
 parseNum :: Parser String String Int

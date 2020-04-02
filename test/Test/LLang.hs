@@ -94,7 +94,16 @@ unit_parseL = do
        @?= Success "" (Seq [Write (Num 5), Read "x", Read "y",
                If (BinOp Or (BinOp Equal (Ident "x") (Num 5)) (Num 1)) (Seq [Write (Num 2)]) (Seq [While (Num 1) (Seq [Write (Num 3)])])
            ])
+    runParser parseL
+        "{read x; if (17 + 2 == x) { print (1); } else { print (2); }; read y; read x; }" 
+        @?= Success "" (Seq [
+                              Read "x",
+                              If (BinOp Equal (BinOp Plus (Num 17) (Num 2)) (Ident "x")) (Seq [Write (Num 1)]) (Seq [Write (Num 2)]),
+                              Read "y",
+                              Read "x"
+                            ])
     assertBool "" $ isFailure (runParser parseL "print (8)")
+    assertBool "" $ isFailure (runParser parseL "{ write (505); }")
     assertBool "" $ isFailure (runParser parseL "read x")
     assertBool "" $ isFailure (runParser parseL "assign x (2)")
     assertBool "" $ isFailure (runParser parseL "if (_) { print (5); } else { print (4); }")
