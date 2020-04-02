@@ -90,7 +90,7 @@ parseSeq :: CodeParser
 parseSeq = do
     parseExactly "{"
     parseSpaces
-    instructions <- many $ parseAnything <* parseExactly ";" <* parseSpaces
+    instructions <- many $ parseAnything <* parseSpaces <* parseExactly ";" <* parseSpaces
     parseExactly "}"
     return $ Seq instructions
 

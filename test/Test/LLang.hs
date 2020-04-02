@@ -23,9 +23,9 @@ unit_parseExprInBrackets = do
 
 unit_parseIf :: Assertion
 unit_parseIf = do
-    runParser parseIf "if (   x    ==    \n\n\n 7) { print (8); print (x); } \n \n else {\nprint(2);}" @?= Success "" 
+    runParser parseIf "if (   x    ==    \n\n\n 7  \n ) { print ( 8 )   \n ; print ( x )  ; } \n \n else {\nprint(2);}" @?= Success "" 
         (If (BinOp Equal (Ident "x") (Num 7)) (Seq [Write (Num 8), Write (Ident "x")]) (Seq [Write (Num 2)]))
-    runParser parseIf "if (x  ==  7) { print (8); print (x); } else {}" @?= Success "" 
+    runParser parseIf "if(x  ==  7) { print (8); print (x); } else {}" @?= Success "" 
         (If (BinOp Equal (Ident "x") (Num 7)) (Seq [Write (Num 8), Write (Ident "x")]) (Seq []))
     assertBool "" $ isFailure (runParser parseIf "print (8)")
     assertBool "" $ isFailure (runParser parseIf "if () { print (8); } else { print (9); }")
@@ -35,16 +35,16 @@ unit_parseIf = do
 
 unit_parseWhile :: Assertion
 unit_parseWhile = do
-    runParser parseWhile "while (x==7) { print (8); print (x); }" @?= Success "" 
+    runParser parseWhile "while (x   ==   7) { print (8); print (x); }" @?= Success "" 
         (While (BinOp Equal (Ident "x") (Num 7)) (Seq [Write (Num 8), Write (Ident "x")]))
-    runParser parseWhile "while (x==7) {}" @?= Success "" 
+    runParser parseWhile "while(x==7) {}" @?= Success "" 
         (While (BinOp Equal (Ident "x") (Num 7)) (Seq []))
     assertBool "" $ isFailure (runParser parseWhile "print (8)")
     assertBool "" $ isFailure (runParser parseWhile "while () { print (8); }")
 
 unit_parseAssign :: Assertion
 unit_parseAssign = do
-    runParser parseAssign "assign _ (0)" @?= Success "" 
+    runParser parseAssign "assign _(0)" @?= Success "" 
         (Assign "_" (Num 0))
     runParser parseAssign "assign   \n \n  lol_1_2_3__ \n    ( 41+67 )" @?= Success "" 
         (Assign "lol_1_2_3__" (BinOp Plus (Num 41) (Num 67)))
@@ -67,7 +67,7 @@ unit_parseRead = do
 
 unit_parseWrite :: Assertion
 unit_parseWrite = do
-    runParser parseWrite "print (_)" @?= Success "" 
+    runParser parseWrite "print(_)" @?= Success "" 
         (Write (Ident "_"))
     runParser parseWrite "print     \n  \n    (    \n \n lol_1_2_3__  \n  +   \n    12     )" @?= Success "" 
         (Write (BinOp Plus (Ident "lol_1_2_3__") (Num 12)))
@@ -77,7 +77,7 @@ unit_parseWrite = do
 
 unit_parseSeq :: Assertion
 unit_parseSeq = do
-    runParser parseSeq "{   \n\n\n   print (5);  \n  read x;   read y;     \n }" @?= Success "" 
+    runParser parseSeq "{   \n\n\n   print (5)  ;  \n  read    \n x   \n   ;   read   \n y   \n;     \n }" @?= Success "" 
         (Seq [Write (Num 5), Read "x", Read "y"])
     runParser parseSeq "{print (5);}" @?= Success "" 
         (Seq [Write (Num 5)])
