@@ -1,10 +1,13 @@
 module Expr where
 
-import           AST         (AST (..), Operator (..))
+import           AST         (AST (..), Operator (..), Subst (..))
 import           Combinators (Parser (..), Result (..), elem', elems, fail',
                               satisfy, success, symbol, symbols)
 import           Data.Char   (digitToInt, isDigit, isLetter)
 import Control.Applicative
+import qualified Data.Map as Map
+import Data.Maybe (fromMaybe)
+
 
 data Associativity
   = LeftAssoc  -- 1 @ 2 @ 3 @ 4 = (((1 @ 2) @ 3) @ 4)
@@ -14,6 +17,17 @@ data Associativity
 -- Универсальный парсер выражений
 data OpType = Binary Associativity
             | Unary
+
+evalExpr :: Subst -> AST -> Maybe Int
+evalExpr subst (BinOp   op l r) = do
+    evaledL <- evalExpr subst l
+    evaledR <- evalExpr subst r
+    return (compute (BinOp op (Num evaledL) (Num evaledR)))
+evalExpr subst (UnaryOp op ast) = do
+    evaled  <- evalExpr subst ast
+    return (compute (UnaryOp op (Num evaled)))
+evalExpr subst (Ident str)      = Just (fromMaybe 0 (Map.lookup str subst))
+evalExpr subst (Num num)        = Just num
 
 uberExpr :: Monoid e
          => [(Parser e i op, OpType)] -- список операций с их арностью и, в случае бинарных, ассоциативностью

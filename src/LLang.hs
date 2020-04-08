@@ -4,7 +4,7 @@ import AST (AST (..), Operator (..), Subst (..))
 import Combinators (Parser (..))
 import qualified Data.Map as Map
 import Control.Applicative
-import Expr (parseExpr, parseNum, parseIdent, parseOp, parseExactly, parseSpaces, parseSomeSpaces)
+import Expr (evalExpr, parseExpr, parseNum, parseIdent, parseOp, parseExactly, parseSpaces, parseSomeSpaces)
 
 type Expr = AST
 
@@ -112,5 +112,29 @@ parseL = do
 initialConf :: [Int] -> Configuration
 initialConf input = Conf Map.empty input []
 
+
+
 eval :: LAst -> Configuration -> Maybe Configuration
-eval = error "eval not defined"
+eval (If cond thn els) conf@(Conf subst input output) = do
+    val <- evalExpr subst cond
+    if (val /= 0) then eval thn conf else eval els conf
+
+eval (While cond body) conf@(Conf subst input output) = do
+    val <- evalExpr subst cond
+    if (val /= 0) then do { step <- eval body conf; eval (While cond body) step; } else return conf
+
+eval (Assign var expr) conf@(Conf subst input output) = do
+    val <- evalExpr subst expr
+    return (Conf (Map.insert var val subst) input output)
+
+eval (Read var) conf@(Conf subst (val:input) output) = Just (Conf (Map.insert var val subst) input output)
+eval (Read var) conf@(Conf subst []          output) = Nothing
+
+eval (Write expr) conf@(Conf subst input output) = do
+    val <- evalExpr subst expr
+    return (Conf subst input (val:output))
+
+eval (Seq (instr:instrs)) conf@(Conf subst input output) = do
+    newConf <- eval instr conf
+    eval (Seq instrs) newConf
+eval (Seq []) conf@(Conf subst input output) = Just conf
