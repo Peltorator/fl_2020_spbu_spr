@@ -5,6 +5,9 @@ import Combinators (Parser (..))
 import qualified Data.Map as Map
 import Control.Applicative
 import Expr (evalExpr, parseExpr, parseNum, parseIdent, parseOp, parseExactly, parseSpaces, parseSomeSpaces)
+import           Text.Printf (printf)
+import           Data.List   (intercalate)
+    
 
 type Expr = AST
 
