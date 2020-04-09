@@ -1,0 +1,140 @@
+\documentclass[10pt]{article}
+
+\usepackage[utf8]{inputenc} 
+\usepackage[russian]{babel} 
+\usepackage[usenames]{color}
+\usepackage{amsmath, amssymb, colortbl, hyperref, fancyhdr}
+\usepackage[dvipdfmx]{graphicx}
+\usepackage[a4paper, margin=.5in, top=1in]{geometry}
+
+\pagestyle{fancy}
+
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\R}{\mathbb{R}}
+\renewcommand{\C}{\mathbb{C}}
+
+\renewcommand{\le}{\leqslant}
+\renewcommand{\leq}{\leqslant}
+\renewcommand{\ge}{\geqslant}
+\renewcommand{\geq}{\geqslant}
+
+\renewcommand{\O}{\varnothing}
+\def\xor{\oplus}
+\def\ol{\overline{}}
+\renewcommand{\headrulewidth}{1pt}
+\lhead{Фидбеки}\chead{}\rhead{Page \thepage\ of \pageref{LastPage}}
+\lfoot{}\cfoot{}\rfoot{}
+
+\begin{document}
+
+\section{Аля}
+
+Факториал числа:
+
+\begin{verbatim}
+Seq
+  Read n
+  Seq
+    Assign ans 1
+    Seq
+      While > n 0
+        Seq
+          Assign ans * ans n
+          Assign n - n 1
+      Write ans
+\end{verbatim}
+
+Фибоначчи:
+
+\begin{verbatim}
+Seq
+  Read n
+  Seq
+    Assign f 0
+    Seq
+      Assign s 1
+      Seq
+        While > n 0
+          Seq
+            Assign t + f s
+            Seq
+              Assign f s
+              Seq
+                Assign s t
+                Assign n - n 1
+        Write f
+\end{verbatim}
+
+
+Нашел маленький баг в документации. Там было написано, что Read нужно пользоваться в виде
+
+\begin{verbatim}
+    V0 Read
+\end{verbatim}
+
+Хотя на самом деле надо пользоваться так:
+
+\begin{verbatim}
+    Read V0
+\end{verbatim}
+
+Язык очень удобный, потому что не надо ставить всякие вспомогательные ключевые слова типа фигурных скобок.
+Но следствием из этого является проблема с Seq. Неклассно его везде писать. И Nop~--- весьма странный костыль.
+Могут быть проблемы с написанием больших арифметических выражениях из-за польской записи.
+В остальном\ldots Если ставить отступы, то очень удобно писать на языке.
+
+
+
+
+
+\section{Олень}
+
+Факториал числа:
+
+\begin{verbatim}
+./
+    read n;
+    bind ans (1);
+    while (n>0)
+    ./
+        bind ans (ans*n);
+        bind n (n-1);
+    \.;
+    write (ans);
+\.
+\end{verbatim}
+
+Фибоначчи:
+
+\begin{verbatim}
+./
+    read n;
+    bind f (0);
+    bind s (1);
+    while (n>0)
+    ./
+        bind t (ans+ans');
+        bind f (s);
+        bind s (t);
+        bind n (n-1);
+    \.;
+    write (f);
+\.
+\end{verbatim}
+
+
+
+Из-за ограничения на длину назания переменных наверняка будут проблемы с тем,
+что названия переменных~--- непонятный случайный набор букв.
+Использование странных наборов символов вместо фигурных скобок выглядит сомнительным решением,
+потому что надо писать два символа, но окей\ldots
+В выражениях нельзя ставить пробелы :( Это очень грустно.
+В остальном все замечательно. Писать точно удобнее, чем на предыдущем языке, потому что не надо бесконечно думать о Seq'ах.
+
+
+\label{LastPage}
+\end{document}
+
+
