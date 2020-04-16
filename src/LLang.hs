@@ -104,11 +104,8 @@ parseL = do
 parseDef :: Parser String String Function
 parseDef = error "parseDef undefined"
 
-parseProg :: Parser String String Prog
+parseProg :: Parser String String Program
 parseProg = error "parseProg undefined"
-
-initialConf :: [Int] -> Configuration
-initialConf input = Conf Map.empty input []
 
 initialConf :: [Int] -> Configuration
 initialConf input = Conf Map.empty input []

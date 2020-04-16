@@ -2,9 +2,9 @@ module Expr where
 
 import           AST                 (AST (..), Operator (..), Subst (..))
 import           Combinators         (Parser (..), Result (..), fail',
-                                      runParser, satisfy, stream, success)
+                                      runParser, satisfy, stream, success, symbol, symbols, elem', elems)
 import           Control.Applicative
-import           Data.Char           (digitToInt, isDigit)
+import           Data.Char           (digitToInt, isDigit, isLetter)
 import qualified Data.Map            as Map
 import Data.Maybe (fromMaybe)
 
@@ -124,8 +124,8 @@ toOperator _    = fail' "Failed toOperator"
 evaluate :: String -> Maybe Int
 evaluate input = do
   case runParser parseExpr input of
-    Success rest ast | null rest -> return $ compute ast
-    _                            -> Nothing
+    Success rest ast | null (stream rest) -> return $ compute ast
+    _                                     -> Nothing
 
 
 hlp True = 1
