@@ -2,11 +2,15 @@
 
 ![Image description](logo.png)
 
-This is the first part of the official documentation of the peLLang programming language. At this moment there is no compiler or interpreter. You can compile it with your eyes. Stay tuned! You can become my patron on Patreon if you want this language to be released ASAP.
+This is the first part of the official documentation of the peLLang programming language. You can become my patron on Patreon if you want this language to be released ASAP.
 
 ## Spaces
 
 It's allowed to use `space` or `\n`. There is no difference between them at all.
+
+I received some critical reviews in which people complained that there are no `\t` symbols. Let me explain it.
+Tabs are sometimes displayed as 4 spaces and sometimes as 8 spaces. If accidentally someone uses them mixed, it's a nightmare.
+Just set a tab button on your computer as 4 spaces.
 
 ## Numbers
 
@@ -70,7 +74,7 @@ Some examples:
 - `1`
 - `-2^2`
 - `----4`
-- `(((-peltorator * (42 - 010)) || (2 == isaf27)) && x && (((y))))`a
+- `(((-peltorator * (42 - 010)) || (2 == isaf27)) && x && (((y))))`
 - `f(2, x) + 12 == 0 || g()`
 
 Some incorrect examples:
