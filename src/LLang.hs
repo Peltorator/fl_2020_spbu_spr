@@ -4,7 +4,7 @@ import AST (AST (..), Operator (..), Subst (..))
 import Combinators (Parser (..))
 import qualified Data.Map as Map
 import Control.Applicative
-import Expr (evalExpr, parseExpr, parseNum, parseIdent, parseOp, parseExactly, parseSpaces, parseSomeSpaces)
+import Expr (evalExpr, parseExpr, parseNum, parseIdent, parseOp, parseExactly, parseSpaces, parseSomeSpaces, parseFunctionCall)
 import           Text.Printf (printf)
 import           Data.List   (intercalate)
 
@@ -90,9 +90,14 @@ parseSeq = do
     parseExactly "}"
     return $ Seq instructions
 
+parseReturn :: CodeParser
+parseReturn = do
+    parseExactly "return"
+    expr <- parseExprInBrackets
+    return $ Return expr
 
 parseAnything :: CodeParser
-parseAnything = parseIf <|> parseWhile <|> parseAssign <|> parseRead <|> parseWrite <|> parseSeq
+parseAnything = parseIf <|> parseWhile <|> parseAssign <|> parseRead <|> parseWrite <|> parseSeq <|> parseReturn
 
 parseL :: CodeParser
 parseL = do
@@ -101,16 +106,32 @@ parseL = do
     parseSpaces
     return x
 
+parseArgs :: Parser String String [String]
+parseArgs = (fmap (:) parseIdent <*> many (parseSpaces *> parseExactly "," *> parseSpaces *> parseIdent)) <|> pure []
+
 parseDef :: Parser String String Function
-parseDef = error "parseDef undefined"
+parseDef = do
+    parseExactly "func"
+    parseSpaces
+    fu <- parseIdent
+    parseSpaces
+    parseExactly "("
+    parseSpaces
+    args <- parseArgs
+    parseSpaces
+    parseExactly ")"
+    parseSpaces
+    body <- parseSeq
+    return $ Function fu args body
 
 parseProg :: Parser String String Program
-parseProg = error "parseProg undefined"
+parseProg = do
+    funcs <- (many (parseSpaces *> parseDef))
+    body <- parseL
+    return $ Program funcs body
 
 initialConf :: [Int] -> Configuration
 initialConf input = Conf Map.empty input []
-
-
 
 eval :: LAst -> Configuration -> Maybe Configuration
 eval (If cond thn els) conf@(Conf subst input output) = do
@@ -142,9 +163,15 @@ instance Show Function where
   show (Function name args funBody) =
     printf "%s(%s) =\n%s" name (intercalate ", " $ map show args) (unlines $ map (identation 1) $ lines $ show funBody)
 
+instance Eq Function where
+  (==) a b = (show a) == (show b)
+
 instance Show Program where
   show (Program defs main) =
     printf "%s\n\n%s" (intercalate "\n\n" $ map show defs) (show main)
+
+instance Eq Program where
+  (==) a b = (show a) == (show b)
 
 instance Show LAst where
   show =

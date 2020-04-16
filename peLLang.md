@@ -104,8 +104,19 @@ Function definition is something of this kind:
 Where `func` is a keyword, `f, x1, ..., xn` are correct variable names (`n >= 0`) and `bd` is something of kind `{}`.
 
 You can use `return` instruction to quit current function and return some value as a result.
-If your program doesn't return anything from some function, it secretly returns zero.
+If any function doesn't return anything, it secretly returns zero.
 Note that variables in different functions that have equal names are different variables.
+Note that `f(x)` and `f(x, y)` are different functions.
+If you defined one function twice, the compiler chooses an implementation at his discretion.
+If you call a function that doesn't exist, empty function is called instead.
+
+Some examples:
+
+- `func _() { }`
+- `func f(x, y, z) { print(x + y); return (z); }`
+
+Some incorrect examples:
+- `func f(x) `
 
 ## Code
 

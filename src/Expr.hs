@@ -63,7 +63,7 @@ parseExpr = uberExpr [
                         (make "+" <|> make "-", Binary LeftAssoc), (make "*" <|> make "/", Binary LeftAssoc),
                         (make "-", Unary), (make "^", Binary RightAssoc)
                      ]
-                     (func (fmap Num parseNum) <|> func (fmap Ident parseIdent) <|> func (symbol '(' *> parseExpr <* symbol ')')) BinOp UnaryOp
+                     (func (fmap Num parseNum) <|> func parseFunctionCall <|> func (fmap Ident parseIdent) <|> func (symbol '(' *> parseExpr <* symbol ')')) BinOp UnaryOp
     where make c = symbols c >>= toOperator
           func f = parseSpaces *> f <* parseSpaces
 
@@ -102,6 +102,18 @@ parseSpaces = many $ symbol ' ' <|> symbol '\n'
 parseSomeSpaces :: Parser String String String
 parseSomeSpaces = some $ symbol ' ' <|> symbol '\n'
 
+parseArgsInCall :: Parser String String [AST]
+parseArgsInCall = (fmap (:) parseExpr <*> many (parseSpaces *> parseExactly "," *> parseSpaces *> parseExpr)) <|> pure []
+
+parseFunctionCall :: Parser String String AST
+parseFunctionCall = do
+    var <- parseIdent
+    parseExactly "("
+    parseSpaces
+    args <- parseArgsInCall
+    parseSpaces
+    parseExactly ")"
+    return $ FunctionCall var args
 
 -- Преобразование символов операторов в операторы
 toOperator :: String -> Parser String String Operator

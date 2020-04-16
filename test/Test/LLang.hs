@@ -5,13 +5,16 @@ import           Combinators      (Result (..), runParser, toStream)
 import qualified Data.Map         as Map
 import           Debug.Trace      (trace)
 import           LLang            (Configuration (..), LAst (..), eval,
-                                   initialConf, parseL, Function (..), Program (..))
+                                   initialConf, parseL, parseDef, parseProg, Function (..), Program (..))
 import           Test.Tasty.HUnit (Assertion, assertBool, (@?=))
 import           Text.Printf      (printf)
 
 -- f x y = read z ; return (x + z * y)
 -- g x = if (x) then return x else return x*13
 -- {read x; read y; write (f x y); write (g x)}"
+
+isFailure (Failure _) = True
+isFailure  _          = False
 
 prog =
   Program
@@ -155,3 +158,31 @@ unit_stmt4 = do
   eval stmt4 (initialConf [2]) @?= Just (Conf (subst' 2) [] [1])
   eval stmt4 (initialConf [10]) @?= Just (Conf (subst 10 10 55 34 55) [] [55] )
   eval stmt4 (initialConf []) @?= Nothing
+
+
+unit_parseDef :: Assertion
+unit_parseDef = do
+    testDef "func _ () { }" (Function "_" [] (Seq []))
+    testDef "func f(x){}" (Function "f" ["x"] (Seq []))
+    testDef "func   \n  \n ___f__12   (    _x   ,   _y,z,t    \n )     \n\n\n  {  return ( z + _x  ) ;  }"
+      (Function "___f__12" ["_x", "_y", "z", "t"] (Seq [Return (BinOp Plus (Ident "z") (Ident "_x"))]))
+    assertBool "" $ isFailure $ runParser parseDef "print (2)"
+    assertBool "" $ isFailure $ runParser parseDef "func 1f () { }"
+    assertBool "" $ isFailure $ runParser parseDef "func () {}"
+    assertBool "" $ isFailure $ runParser parseDef "func f (x y) { }"
+    assertBool "" $ isFailure $ runParser parseDef "func f (x)"
+    assertBool "" $ isFailure $ runParser parseDef "func f { }"
+  where testDef str fu = do {runParser parseDef str @?= Success (toStream "" (length str)) fu}
+
+unit_parseProg :: Assertion
+unit_parseProg = do
+    testProg "func _ () { } { }" (Program [(Function "_" [] (Seq []))] (Seq []))
+    testProg "func f(x) { return (x); } func g(x) { return (2 + f(x)); } { read x; print (f(x) + g(x)); }" (Program 
+        [
+            (Function "f" ["x"] (Seq [Return (Ident "x")])),
+            (Function "g" ["x"] (Seq [Return (BinOp Plus (Num 2) (FunctionCall "f" [Ident "x"]))]))
+        ] 
+        (Seq [Read "x", Write (BinOp Plus (FunctionCall "f" [Ident "x"]) (FunctionCall "g" [Ident "x"]))])
+     )
+    assertBool "" $ isFailure $ runParser parseProg "func f() { }"
+  where testProg str fu = do {runParser parseProg str @?= Success (toStream "" (length str)) fu}
