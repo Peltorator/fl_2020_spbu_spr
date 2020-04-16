@@ -46,7 +46,7 @@ Some incorrect exmples:
 
 ## Expressions
 
-Basic expression is a number or a variable. Expressions are constructed from basic expressions using brackets and the following operations:
+Basic expression is a number or a variable. Expressions are constructed from basic expressions using brackets, functions calls (we'll talk about it later) and the following operations:
 
 Operator | Example       | Associativity | Priority | Comment
 ---------|---------------|---------------|----------|--------
@@ -70,7 +70,8 @@ Some examples:
 - `1`
 - `-2^2`
 - `----4`
-- `(((-peltorator * (42 - 010)) || (2 == isaf27)) && x && (((y))))`
+- `(((-peltorator * (42 - 010)) || (2 == isaf27)) && x && (((y))))`a
+- `f(2, x) + 12 == 0 || g()`
 
 Some incorrect examples:
 - `+5` (Unary plus is forbidden)
@@ -88,20 +89,45 @@ if              | `if (expr) { instruct } else { instruct }`    |
 while           | `while (expr) instruct`                       |
 read            | `read var`                                    | You should put at least one space symbol after `read` word.
 print           | `print (expr)`                                |
+return          | `return (expr)`                               |
 
+## Functions
 
-The correct code should be constructed from these instructions recursively. Also `{}` must be present at the top level.
+Function definition is something of this kind:
+
+`func f(x1, x2, ..., xn) bd`
+
+Where `func` is a keyword, `f, x1, ..., xn` are correct variable names (`n >= 0`) and `bd` is something of kind `{}`.
+
+You can use `return` instruction to quit current function and return some value as a result.
+If your program doesn't return anything from some function, it secretly returns zero.
+Note that variables in different functions that have equal names are different variables.
+
+## Code
+
+The correct code should be constructed from these instructions recursively.
 Note that if you didn't assign a variable, then it's value is equal to zero.
+
+Correct code is something of this kind:
+
+`f1 f2 f3 ... fn body`
+
+Where `f1, f2, ..., fn` are function definitions (`n >= 0`) and `body` is a construction of type `{}`.
 
 Some examples:
 
 - `{ print (505); }`
 - `{read x; if (17 + 2 == x) { print (1); } else { print (2); }; read y; read x; }`
+- `func fib(x) { print (x); } func fact(y, z) { return (y * z); } { fib(2); print (fact(3, 4) + 14); }`
+- `func f() { } { print (f()); }`
+- `{ }`
 
 Some incorrect examples:
 
 - `print (505)`
 - `{ if (17 + 2 == x) { print (1); } else { print (2); }; }`
+- `func f() { return 42; }`
+- ``
 
 
 If you have any questions you can text me on Telegram: @peltorator.
