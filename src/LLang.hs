@@ -92,14 +92,8 @@ parseSeq = do
     parseExactly "}"
     return $ Seq instructions
 
-parseReturn :: CodeParser
-parseReturn = do
-    parseExactly "return"
-    expr <- parseExprInBrackets
-    return $ Return expr
-
-parseAnything :: CodeParser
-parseAnything = parseIf <|> parseWhile <|> parseAssign <|> parseRead <|> parseWrite <|> parseSeq <|> parseReturn
+    parseAnything :: CodeParser
+parseAnything = parseIf <|> parseWhile <|> parseAssign <|> parseRead <|> parseWrite <|> parseSeq
 
 parseL :: CodeParser
 parseL = do
@@ -124,7 +118,10 @@ parseDef = do
     parseExactly ")"
     parseSpaces
     body <- parseSeq
-    return $ Function fu args body
+    parseSpaces
+    parseExactly "return"
+    expr <- parseExprInBrackets
+    return $ Function fu args body expr
 
 parseProg :: Parser String String Program
 parseProg = do
@@ -133,32 +130,32 @@ parseProg = do
     return $ Program funcs body
 
 initialConf :: [Int] -> Configuration
-initialConf input = Conf Map.empty input []
+initialConf input = Conf Map.empty input [] Map.empty
 
 eval :: LAst -> Configuration -> Maybe Configuration
-eval (If cond thn els) conf@(Conf subst input output) = do
+eval (If cond thn els) conf@(Conf subst input output defs) = do
     val <- evalExpr subst cond
     if (val /= 0) then eval thn conf else eval els conf
 
-eval (While cond body) conf@(Conf subst input output) = do
+eval (While cond body) conf@(Conf subst input output defs) = do
     val <- evalExpr subst cond
     if (val /= 0) then do { step <- eval body conf; eval (While cond body) step; } else return conf
 
-eval (Assign var expr) conf@(Conf subst input output) = do
+eval (Assign var expr) conf@(Conf subst input output defs) = do
     val <- evalExpr subst expr
-    return (Conf (Map.insert var val subst) input output)
+    return (Conf (Map.insert var val subst) input output defs)
 
-eval (Read var) conf@(Conf subst (val:input) output) = Just (Conf (Map.insert var val subst) input output)
-eval (Read var) conf@(Conf subst []          output) = Nothing
+eval (Read var) conf@(Conf subst (val:input) output defs) = Just (Conf (Map.insert var val subst) input output defs)
+eval (Read var) conf@(Conf subst []          output defs) = Nothing
 
-eval (Write expr) conf@(Conf subst input output) = do
+eval (Write expr) conf@(Conf subst input output defs) = do
     val <- evalExpr subst expr
-    return (Conf subst input (val:output))
+    return (Conf subst input (val:output) defs)
 
-eval (Seq (instr:instrs)) conf@(Conf subst input output) = do
+eval (Seq (instr:instrs)) conf@(Conf subst input output defs) = do
     newConf <- eval instr conf
     eval (Seq instrs) newConf
-eval (Seq []) conf@(Conf subst input output) = Just conf
+eval (Seq []) conf@(Conf subst input output defs) = Just conf
 
 instance Show Function where
   show (Function name args funBody returnExpr) =
