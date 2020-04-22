@@ -2,10 +2,11 @@ module Expr where
 
 import           AST                 (AST (..), Operator (..), Subst (..))
 import           Combinators         (Parser (..), Result (..), fail',
-                                      runParser, satisfy, stream, success)
+                                      runParser, satisfy, stream, success, symbol, symbols, elem', elems)
 import           Control.Applicative
-import           Data.Char           (digitToInt, isDigit)
+import           Data.Char           (digitToInt, isDigit, isLetter)
 import qualified Data.Map            as Map
+import Data.Maybe (fromMaybe)
 
 data Associativity
   = LeftAssoc  -- 1 @ 2 @ 3 @ 4 = (((1 @ 2) @ 3) @ 4)
@@ -16,7 +17,15 @@ data OpType = Binary Associativity
             | Unary
 
 evalExpr :: Subst -> AST -> Maybe Int
-evalExpr = error "evalExpr undefined"
+evalExpr subst (BinOp   op l r) = do
+    evaledL <- evalExpr subst l
+    evaledR <- evalExpr subst r
+    return (compute (BinOp op (Num evaledL) (Num evaledR)))
+evalExpr subst (UnaryOp op ast) = do
+    evaled  <- evalExpr subst ast
+    return (compute (UnaryOp op (Num evaled)))
+evalExpr subst (Ident str)      = Just (fromMaybe 0 (Map.lookup str subst))
+evalExpr subst (Num num)        = Just num
 
 uberExpr :: Monoid e
          => [(Parser e i op, OpType)] -- список операций с их арностью и, в случае бинарных, ассоциативностью
@@ -24,14 +33,41 @@ uberExpr :: Monoid e
          -> (op -> ast -> ast -> ast) -- конструктор узла дерева для бинарной операции
          -> (op -> ast -> ast)        -- конструктор узла для унарной операции
          -> Parser e i ast
-uberExpr = error "uberExpr undefined"
+uberExpr ((pars, as):parsers) basicParser makeAST makeASTU = (case as of
+    Binary NoAssoc    -> do
+        left  <- getTail
+        prs   <- pars
+        right <- getTail
+        return (makeAST prs left right)
+      <|> getTail
+    Binary LeftAssoc  -> do
+        (beg, end) <- fmap (,) getTail <*> (many $ fmap (,) pars <*> getTail)
+        return (foldl (\le (op, ri) -> makeAST op le ri) beg end)
+    Binary RightAssoc  -> do
+        (beg, end) <- fmap (,) (many $ fmap (,) getTail <*> pars) <*> getTail
+        return (foldr (\(le, op) ri -> makeAST op le ri) end beg)
+    Unary             -> fmap makeASTU pars <*> getTail
+    ) <|> getTail
+ 
+  where getTail = uberExpr parsers basicParser makeAST makeASTU
+        
+uberExpr [] x _ _ = x
 
 
 -- Парсер для выражений над +, -, *, /, ^ (возведение в степень)
 -- с естественными приоритетами и ассоциативностью над натуральными числами с 0.
 -- В строке могут быть скобки
 parseExpr :: Parser String String AST
-parseExpr = error "parseExpr undefined"
+parseExpr = uberExpr [
+                        (make "||", Binary RightAssoc), (make "&&", Binary RightAssoc), (make "!", Unary),
+                        (make "==" <|> make "/=" <|> make "<=" <|> make "<" <|> make ">=" <|> make ">", Binary NoAssoc),
+                        (make "+" <|> make "-", Binary LeftAssoc), (make "*" <|> make "/", Binary LeftAssoc),
+                        (make "-", Unary), (make "^", Binary RightAssoc)
+                     ]
+                     (func (fmap Num parseNum) <|> func parseFunctionCall <|> func (fmap Ident parseIdent) <|> func (symbol '(' *> parseExpr <* symbol ')')) BinOp UnaryOp
+    where make c = symbols c >>= toOperator
+          func f = parseSpaces *> f <* parseSpaces
+
 
 -- Парсер для целых чисел
 parseNum :: Parser String String Int
@@ -41,10 +77,62 @@ parseNum = foldl (\acc d -> 10 * acc + digitToInt d) 0 <$> go
     go = some (satisfy isDigit)
 
 parseNegNum :: Parser String String Int
-parseNegNum = error "parseNegNum undefined"
+parseNegNum = fmap (foldl f 0) go
+  where
+    f x '-' = -x
+    f x y   = 10 * x + digitToInt y
+    go :: Parser String String String
+    go = some (satisfy isDigit) <|> (fmap (\a b -> b ++ a) (many (symbol '-')) <*> some (satisfy isDigit))
 
 parseIdent :: Parser String String String
-parseIdent = error "parseIdent undefined"
+parseIdent = do
+    hd <- (satisfy isLetter) <|> (symbol '_')
+    tl <- many $ (satisfy isLetter) <|> (satisfy isDigit) <|> (symbol '_')
+    return (hd:tl)
+
+-- Парсер для операторов
+parseOp :: Parser String String Operator
+parseOp = elems ["||", "&&", ">", ">=", "<", "<=", "/=", "==", "+", "-", "*", "/", "^", "!"]  >>= toOperator
+
+parseExactly :: String -> Parser String String String
+parseExactly = foldr (\hd tl -> fmap (:) (symbol hd) <*> tl) $ pure ""
+
+parseSpaces :: Parser String String String
+parseSpaces = many $ symbol ' ' <|> symbol '\n'
+
+parseSomeSpaces :: Parser String String String
+parseSomeSpaces = some $ symbol ' ' <|> symbol '\n'
+
+parseArgsInCall :: Parser String String [AST]
+parseArgsInCall = (fmap (:) parseExpr <*> many (parseSpaces *> parseExactly "," *> parseSpaces *> parseExpr)) <|> pure []
+
+parseFunctionCall :: Parser String String AST
+parseFunctionCall = do
+    var <- parseIdent
+    parseExactly "("
+    parseSpaces
+    args <- parseArgsInCall
+    parseSpaces
+    parseExactly ")"
+    return $ FunctionCall var args
+
+-- Преобразование символов операторов в операторы
+toOperator :: String -> Parser String String Operator
+toOperator "+"  = success Plus
+toOperator "*"  = success Mult
+toOperator "-"  = success Minus
+toOperator "/"  = success Div
+toOperator "^"  = success Pow
+toOperator "==" = success Equal
+toOperator "/=" = success Nequal
+toOperator "<=" = success Le
+toOperator "<"  = success Lt
+toOperator ">=" = success Ge
+toOperator ">"  = success Gt
+toOperator "&&" = success And
+toOperator "||" = success Or
+toOperator "!"  = success Not
+toOperator _    = fail' "Failed toOperator"
 
 evaluate :: String -> Maybe Int
 evaluate input = do
@@ -52,10 +140,25 @@ evaluate input = do
     Success rest ast | null (stream rest) -> return $ compute ast
     _                                     -> Nothing
 
+
+hlp True = 1
+hlp False = 0
+
 compute :: AST -> Int
-compute (Num x)           = x
-compute (BinOp Plus x y)  = compute x + compute y
-compute (BinOp Mult x y)  = compute x * compute y
-compute (BinOp Minus x y) = compute x - compute y
-compute (BinOp Div x y)   = compute x `div` compute y
+compute (Num x)            = x
+compute (BinOp Plus x y)   = compute x + compute y
+compute (BinOp Mult x y)   = compute x * compute y
+compute (BinOp Minus x y)  = compute x - compute y
+compute (BinOp Div x y)    = compute x `div` compute y
+compute (BinOp Pow x y)    = (compute x) ^ (compute y)
+compute (BinOp Equal x y)  = hlp ((compute x) == (compute y))
+compute (BinOp Nequal x y) = hlp ((compute x) /= (compute y))
+compute (BinOp Le x y)     = hlp ((compute x) <= (compute y))
+compute (BinOp Lt x y)     = hlp ((compute x) < (compute y))
+compute (BinOp Ge x y)     = hlp ((compute x) >= (compute y))
+compute (BinOp Gt x y)     = hlp ((compute x) > (compute y))
+compute (BinOp And x y)    = (compute x) * (compute y)
+compute (BinOp Or x y)     = let frst = compute x in if frst == 0 then compute y else frst
+compute (UnaryOp Minus x)  = -(compute x)
+compute (UnaryOp Not x)    = if compute x == 0 then 1 else 0
 
