@@ -6,7 +6,8 @@ import           Data.List   (intercalate)
 import qualified Data.Map    as Map
 import           Text.Printf (printf)
 import Control.Applicative
-import Expr (evalExpr, parseExpr, parseNum, parseIdent, parseOp, parseExactly, parseSpaces, parseSomeSpaces, parseFunctionCall)
+import Expr (compute, parseExpr, parseNum, parseIdent, parseOp, parseExactly, parseSpaces, parseSomeSpaces, parseFunctionCall)
+import Data.Maybe (fromMaybe)
 
 type Expr = AST
 
@@ -132,30 +133,65 @@ parseProg = do
 initialConf :: [Int] -> Configuration
 initialConf input = Conf Map.empty input [] Map.empty
 
+evalExpr :: Configuration -> AST -> Maybe (Configuration, Int)
+evalExpr conf (BinOp   op l r) = do
+    (c1, evaledL) <- evalExpr conf l
+    (c2, evaledR) <- evalExpr c1 r
+    return ((c2, compute (BinOp op (Num evaledL) (Num evaledR))))
+evalExpr conf (UnaryOp op ast) = do
+    (c1, evaled)  <- evalExpr conf ast
+    return (c1, compute (UnaryOp op (Num evaled)))
+evalExpr conf (Ident str)      = Just (conf, fromMaybe 0 (Map.lookup str (subst conf)))
+evalExpr conf (Num num)        = Just (conf, num)
+evalExpr conf (FunctionCall fu args') =
+    case (foldr evalNext (Just (conf, [])) $ reverse args') of
+        Nothing -> Nothing
+        Just (c1, revargs'') -> let args'' = reverse revargs'' in do
+            func <- Map.lookup fu (defs c1)
+            (c2, args''') <- evalFunction (Conf (Map.fromList $ zip (args func) args'') (input c1) (output c1) (defs c1)) func args''
+            return (Conf (subst c1) (input c2) (output c2) (defs c1), args''')
+  where
+  evalNext arg Nothing             = Nothing
+  evalNext arg (Just (conf, args)) = case evalExpr conf arg of
+    Just (c1, arg') -> Just (c1, arg':args)
+    Nothing -> Nothing
+
+
+
 eval :: LAst -> Configuration -> Maybe Configuration
 eval (If cond thn els) conf@(Conf subst input output defs) = do
-    val <- evalExpr subst cond
-    if (val /= 0) then eval thn conf else eval els conf
+    ((Conf subst1 input1 output1 defs1), val) <- evalExpr conf cond
+    if (val /= 0) then eval thn (Conf subst input1 output1 defs) else eval els (Conf subst input1 output1 defs)
 
 eval (While cond body) conf@(Conf subst input output defs) = do
-    val <- evalExpr subst cond
-    if (val /= 0) then do { step <- eval body conf; eval (While cond body) step; } else return conf
+    ((Conf subst1 input1 output1 defs1), val) <- evalExpr conf cond
+    if (val /= 0) 
+        then do { step <- eval body (Conf subst input1 output1 defs); eval (While cond body) step; } 
+        else return (Conf subst input1 output1 defs)
 
 eval (Assign var expr) conf@(Conf subst input output defs) = do
-    val <- evalExpr subst expr
-    return (Conf (Map.insert var val subst) input output defs)
+    ((Conf subst1 input1 output1 defs1), val) <- evalExpr conf expr
+    return (Conf (Map.insert var val subst) input1 output1 defs)
 
 eval (Read var) conf@(Conf subst (val:input) output defs) = Just (Conf (Map.insert var val subst) input output defs)
 eval (Read var) conf@(Conf subst []          output defs) = Nothing
 
 eval (Write expr) conf@(Conf subst input output defs) = do
-    val <- evalExpr subst expr
-    return (Conf subst input (val:output) defs)
+    ((Conf subst1 input1 output1 defs1), val) <- evalExpr conf expr
+    return (Conf subst input1 (val:output1) defs)
 
 eval (Seq (instr:instrs)) conf@(Conf subst input output defs) = do
-    newConf <- eval instr conf
-    eval (Seq instrs) newConf
+    (Conf subst1 input1 output1 defs1) <- eval instr conf
+    eval (Seq instrs) (Conf subst1 input1 output1 defs)
 eval (Seq []) conf@(Conf subst input output defs) = Just conf
+
+
+evalFunction :: Configuration -> Function -> [Int] -> Maybe (Configuration, Int)
+evalFunction (Conf subst input output defs) (Function name argNames funBody returnExpr) argValues = do
+    c1 <- eval funBody (Conf (Map.fromList (zip argNames argValues)) input output defs)
+    (Conf subst' input' output' defs') <- eval (Write returnExpr) c1
+    return (Conf subst input' (tail output') defs, head output')
+
 
 instance Show Function where
   show (Function name args funBody returnExpr) =

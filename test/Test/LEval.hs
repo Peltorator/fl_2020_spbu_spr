@@ -20,7 +20,7 @@ ignoreDefs conf Nothing = assertBool "" (isNothing conf)
 
 
 -- f x y = read z ; return (x + z * y)
--- g x = if (x) then res = y else res = x*13; return res
+-- g x = if (x) then write 42; res = x else res = x*13; return res
 -- {read x; read y; write (f x y); write (g x)}"
 prog =
   Program
