@@ -93,30 +93,30 @@ if              | `if (expr) { instruct } else { instruct }`    |
 while           | `while (expr) instruct`                       |
 read            | `read var`                                    | You should put at least one space symbol after `read` word.
 print           | `print (expr)`                                |
-return          | `return (expr)`                               |
 
 ## Functions
 
 Function definition is something of this kind:
 
-`func f(x1, x2, ..., xn) bd`
+`func f(x1, x2, ..., xn) bd return (exp);`
 
-Where `func` is a keyword, `f, x1, ..., xn` are correct variable names (`n >= 0`) and `bd` is something of kind `{}`.
+Where `func` is a keyword, `f, x1, ..., xn` are correct variable names (`n >= 0`), `bd` is something of kind `{}`, `return` is a keyword and `exp` is expression. You can think that `return` is inside `bd` and is just the last instruction. If you don't really want to return anything, just return `0`. If you don't need any function body, you can just use an empty body: `{}`.
 
-You can use `return` instruction to quit current function and return some value as a result.
-If any function doesn't return anything, it secretly returns zero.
+Note that you can use any variables from `bd` that are assigned at the highest level in `return` expression.
 Note that variables in different functions that have equal names are different variables.
 Note that `f(x)` and `f(x, y)` are different functions.
 If you defined one function twice, the compiler chooses an implementation at his discretion.
-If you call a function that doesn't exist, empty function is called instead.
+If you call a function that doesn't exist, empty function that returns `0` is called instead.
 
 Some examples:
 
-- `func _() { }`
-- `func f(x, y, z) { print(x + y); return (z); }`
+- `func _() { } return (0);`
+- `func f(x, y, z) { print(x + y); return (z); assign t (x * z); } return (t + y);`
 
 Some incorrect examples:
 - `func f(x) `
+- `func f(x) { }`
+- `func f(x) return (0);`
 
 ## Code
 
@@ -133,15 +133,14 @@ Some examples:
 
 - `{ print (505); }`
 - `{read x; if (17 + 2 == x) { print (1); } else { print (2); }; read y; read x; }`
-- `func fib(x) { print (x); } func fact(y, z) { return (y * z); } { fib(2); print (fact(3, 4) + 14); }`
-- `func f() { } { print (f()); }`
+- `func fib(x) { print (x); } return (0); func fact(y, z) { } return (y * z); { fib(2); print (fact(3, 4) + 14); }`
+- `func f() { } return (0); { print (f()); }`
 - `{ }`
 
 Some incorrect examples:
 
-- `print (505)`
-- `{ if (17 + 2 == x) { print (1); } else { print (2); }; }`
-- `func f() { return 42; }`
+- `print (505);`
+- `func f() { } return (42);`
 - ``
 
 
