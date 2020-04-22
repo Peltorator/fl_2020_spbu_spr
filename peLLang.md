@@ -103,15 +103,19 @@ Function definition is something of this kind:
 Where `func` is a keyword, `f, x1, ..., xn` are correct variable names (`n >= 0`), `bd` is something of kind `{}`, `return` is a keyword and `exp` is expression. You can think that `return` is inside `bd` and is just the last instruction. If you don't really want to return anything, just return `0`. If you don't need any function body, you can just use an empty body: `{}`.
 
 Note that you can use any variables from `bd` that are assigned at the highest level in `return` expression.
+
 Note that variables in different functions that have equal names are different variables.
+
 Note that `f(x)` and `f(x, y)` are different functions.
+
 If you defined one function twice, the compiler chooses an implementation at his discretion.
+
 If you call a function that doesn't exist, empty function that returns `0` is called instead.
 
 Some examples:
 
 - `func _() { } return (0);`
-- `func f(x, y, z) { print(x + y); return (z); assign t (x * z); } return (t + y);`
+- `func f(x, y, z) { print(x + y); assign t (x * z); } return (t + y);`
 
 Some incorrect examples:
 - `func f(x) `
@@ -141,7 +145,7 @@ Some incorrect examples:
 
 - `print (505);`
 - `func f() { } return (42);`
-- ``
+- ` `
 
 
 If you have any questions you can text me on Telegram: @peltorator.
