@@ -10,7 +10,7 @@ data Result error input result
   | Failure [ErrorMsg error]
   deriving (Eq)
 
-type Position = Int
+data Position = Position { line :: Int, col :: Int } deriving (Show, Eq, Ord)
 
 newtype Parser error input result
   = Parser { runParser' :: (InputStream input) -> Result error input result }
@@ -23,7 +23,7 @@ data ErrorMsg e = ErrorMsg { errors :: [e], pos :: Position }
 
 makeError e p = ErrorMsg [e] p
 
-initPosition = 0
+initPosition = Position 0 0
 
 runParser :: Parser error input result -> input -> Result error input result
 runParser parser input = runParser' parser (InputStream input initPosition)
@@ -31,8 +31,19 @@ runParser parser input = runParser' parser (InputStream input initPosition)
 toStream :: a -> Position -> InputStream a
 toStream = InputStream
 
-incrPos :: InputStream a -> InputStream a
-incrPos (InputStream str pos) = InputStream str (pos + 1)
+incrPosLine :: InputStream a -> InputStream a
+incrPosLine (InputStream str (Position line col)) = InputStream str (Position (line + 1) 0)
+
+incrPosCol :: InputStream a -> InputStream a
+incrPosCol (InputStream str (Position line col)) = InputStream str (Position line (col + 1))
+
+incrPos :: Char -> InputStream a -> InputStream a
+incrPos '\n' is = incrPosLine is
+incrPos _    is = incrPosCol is
+
+incrPos' :: Char -> Position -> Position
+incrPos' '\n' (Position line col) = Position (line + 1) 0
+incrPos' _    (Position line col) = Position line (col + 1)
 
 instance Functor (Parser error input) where
   fmap f (Parser g) = Parser $ \x -> case g x of
@@ -96,7 +107,7 @@ symbols (x:xs) = do
     ys <- symbols xs
     return (y:ys)
 
-elem' :: (Show a) => Parser String [a] a
+elem' :: Parser String String Char
 elem' = satisfy (const True)
 
 elems :: [String] -> Parser String String String
@@ -107,10 +118,10 @@ eof :: Parser String String ()
 eof = Parser $ \input -> if null $ stream input then Success input () else Failure [makeError "Not eof" (curPos input)]
 
 -- Проверяет, что первый элемент входной последовательности удовлетворяет предикату
-satisfy :: (a -> Bool) -> Parser String [a] a
+satisfy :: (Char -> Bool) -> Parser String String Char
 satisfy p = Parser $ \(InputStream input pos) ->
   case input of
-    (x:xs) | p x -> Success (incrPos $ InputStream xs pos) x
+    (x:xs) | p x -> Success (incrPos x $ InputStream xs pos) x
     input        -> Failure [makeError "Predicate failed" pos]
 
 -- Успешно парсит пустую строку
@@ -129,7 +140,7 @@ word :: String -> Parser String String String
 word w = Parser $ \(InputStream input pos) ->
   let (pref, suff) = splitAt (length w) input in
   if pref == w
-  then Success (InputStream suff (pos + length w)) w
+  then Success (InputStream suff (foldr incrPos' pos (reverse w))) w
   else Failure [makeError ("Expected " ++ show w) pos]
 
 instance Show (ErrorMsg String) where

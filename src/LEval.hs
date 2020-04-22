@@ -9,5 +9,5 @@ evalProg (Program functions main) inp = eval main (Conf Map.empty inp [] (Map.fr
 
 parseAndEvalProg :: String -> [Int] -> Maybe Configuration
 parseAndEvalProg code inp = case (runParser parseProg code) of
-    Success (InputStream stream curPos) result -> if (curPos == length stream) then evalProg result inp else Nothing
+    Success (InputStream stream curPos) result -> evalProg result inp
     Failure _                                  -> Nothing

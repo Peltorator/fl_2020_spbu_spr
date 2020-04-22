@@ -42,6 +42,7 @@ parseExprInBrackets = do
     expr <- parseExpr
     parseSpaces
     parseExactly ")"
+    parseSpaces
     return expr
 
 parseIf :: CodeParser
@@ -93,7 +94,7 @@ parseSeq = do
     parseExactly "}"
     return $ Seq instructions
 
-    parseAnything :: CodeParser
+parseAnything :: CodeParser
 parseAnything = parseIf <|> parseWhile <|> parseAssign <|> parseRead <|> parseWrite <|> parseSeq
 
 parseL :: CodeParser
@@ -122,6 +123,8 @@ parseDef = do
     parseSpaces
     parseExactly "return"
     expr <- parseExprInBrackets
+    parseSpaces
+    parseExactly ";"
     return $ Function fu args body expr
 
 parseProg :: Parser String String Program
