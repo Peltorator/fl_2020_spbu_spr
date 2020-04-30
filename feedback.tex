@@ -1,0 +1,198 @@
+\documentclass[10pt]{article}
+
+\usepackage[utf8]{inputenc} 
+\usepackage[russian]{babel} 
+\usepackage[usenames]{color}
+\usepackage{amsmath, amssymb, colortbl, hyperref, fancyhdr}
+\usepackage[dvipdfmx]{graphicx}
+\usepackage[a4paper, margin=.5in, top=1in]{geometry}
+
+\pagestyle{fancy}
+
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\R}{\mathbb{R}}
+\renewcommand{\C}{\mathbb{C}}
+
+\renewcommand{\le}{\leqslant}
+\renewcommand{\leq}{\leqslant}
+\renewcommand{\ge}{\geqslant}
+\renewcommand{\geq}{\geqslant}
+
+\renewcommand{\O}{\varnothing}
+\def\xor{\oplus}
+\def\ol{\overline{}}
+\renewcommand{\headrulewidth}{1pt}
+\lhead{Фидбеки}\chead{}\rhead{Page \thepage\ of \pageref{LastPage}}
+\lfoot{}\cfoot{}\rfoot{}
+
+\begin{document}
+
+\section{Аля}
+
+Биномиальный коэффициент:
+
+\begin{verbatim}
+WithFun
+Fun Fact With n ThatsAll
+  Seq
+    Assign ans 1
+    While > n 0
+      Seq
+        Assign ans * ans n
+        Assign n - n 1
+  Return ans
+
+ThatsAllFun
+
+Seq
+  Read n
+  Seq
+    Read k
+    Write / / Call Fact With n ThatsAll Call Fact With k ThatsAll Call Fact With - n k
+  \end{verbatim}
+
+Фибоначчи:
+
+\begin{verbatim}
+WithFun
+Fun Fib With n ThatsAll
+  Seq
+    Assign f 0
+    Seq
+      Assign s 1
+      While > n 0
+        Seq
+          Assign t + f s
+          Seq
+            Assign f s
+            Seq
+              Assign s t
+              Assign n - n 1
+  Return f
+
+ThatsAllFun
+
+Seq
+  Read n
+  Write Call Fib With n ThatsAll
+\end{verbatim}
+
+
+
+Удвоение числа:
+
+\begin{verbatim}
+WithFun
+Fun Sum With a With b ThatsAll
+  While > b 0
+    Seq
+      Assign a + a 1
+      Assign b - b 1
+  Return a
+
+WithFun
+Fun Minus With a With b ThatsAll
+  While > b 0
+    Seq
+      Assign a - a 1
+      Assign b - b 1
+  Return a
+
+ThatsAllFun
+
+Seq
+  Read n
+  Write Call Sum With Call Sum With n With 5 ThatsAll With Call Minus With n With 5 ThatsAll ThatsAll
+\end{verbatim}
+
+
+Функции были добавлены очень органично. Разобраться с ними было сильно легче, чем изначально с языком.
+
+
+
+\section{Олень}
+
+Биномиальный коэффициент:
+
+\begin{verbatim}
+fun fact: n
+./
+    bind ans (1);
+    while (n>0)
+    ./
+        bind ans (ans*n);
+        bind n (n-1);
+    \.;
+\.
+up (ans)
+
+./
+    read n;
+    read k;
+    write (fact(n)/(fact(k)*fact(n-k)));
+\.
+\end{verbatim}
+
+Фибоначчи:
+
+\begin{verbatim}
+fun fib: n
+./
+    bind f (0);
+    bind s (1);
+    while (n>0)
+    ./
+        bind t (f+s);
+        bind f (s);
+        bind s (t);
+        bind n (n-1);
+    \.;
+\.
+up (f)
+
+
+./
+    read n;
+    write (fib(n));
+\.
+\end{verbatim}
+
+Удвоение числа:
+
+\begin{verbatim}
+fun sum: a b
+./
+    while (b>0)
+    ./
+        bind a (a+1);
+        bind b (b-1);
+    \.;
+\.
+up (a)
+
+fun minus: a b
+./
+    while (b>0)
+    ./
+        bind a (a-1);
+        bind b (b-1);
+    \.;
+\.
+up (a)
+
+./
+    read n;
+    write (sum(sum(n, 5), minus(n, 5)));
+\.
+\end{verbatim}
+
+
+
+Очень удобно все так, параметры просто по очереди без запятых~--- это прикольно.
+
+\label{LastPage}
+\end{document}
+
+
