@@ -34,15 +34,17 @@ toStream = InputStream
 incrPosLine :: InputStream a -> InputStream a
 incrPosLine (InputStream str (Position line col)) = InputStream str (Position (line + 1) 0)
 
-incrPosCol :: InputStream a -> InputStream a
-incrPosCol (InputStream str (Position line col)) = InputStream str (Position line (col + 1))
+incrPosCol :: InputStream a -> Int -> InputStream a
+incrPosCol (InputStream str (Position line col)) x = InputStream str (Position line (col + x))
 
 incrPos :: Char -> InputStream a -> InputStream a
 incrPos '\n' is = incrPosLine is
-incrPos _    is = incrPosCol is
+incrPos '\t' is = incrPosCol is 4
+incrPos _    is = incrPosCol is 1
 
 incrPos' :: Char -> Position -> Position
 incrPos' '\n' (Position line col) = Position (line + 1) 0
+incrPos' '\t' (Position line col) = Position line (col + 4)
 incrPos' _    (Position line col) = Position line (col + 1)
 
 instance Functor (Parser error input) where
