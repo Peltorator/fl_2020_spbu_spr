@@ -39,7 +39,7 @@ incrPosCol (InputStream str (Position line col)) x = InputStream str (Position l
 
 incrPos :: Char -> InputStream a -> InputStream a
 incrPos '\n' is = incrPosLine is
-incrPos '\t' is = incrPosCol is 4
+incrPos '\t' (InputStream str (Position line col)) = InputStream str (Position line ((div col 4 + 1) * 4))
 incrPos _    is = incrPosCol is 1
 
 incrPos' :: Char -> Position -> Position
