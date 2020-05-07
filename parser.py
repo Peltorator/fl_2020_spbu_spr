@@ -1,6 +1,5 @@
 import ply.yacc as yacc
 import ply.lex as lex
-from calclex import tokens
 
 tokens = [
    "ARROW",
