@@ -6,7 +6,7 @@
 `n >= 1`, так что на финальном шаге допишем еще буковок.
 
 ```
-S -> A | B
-A -> abc | aAc
-B -> adcc | aBcc
+S -> B | D
+B -> abc | aBc
+D -> adcc | aDcc
 ```
