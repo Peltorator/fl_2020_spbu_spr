@@ -51,6 +51,7 @@
 `aaabcc(c)$`   | `0 a 3 B 4`              | S5
 `aaabcc(c)$`   | `0 a 3 B 4 c 5`          | R3
 `aaabccc($)`   | `0 B 1`                  | ACC
+`aaabccc$`     | `0`                      |
 
 
 Попытаемся произвести вывод на цепочке `aaaabccc`:
@@ -69,4 +70,4 @@
 `aaaabcc(c)$`   | `0 a 3 a 3 B 4`              | S5
 `aaaabcc(c)$`   | `0 a 3 a 3 B 4 c 5`          | R3
 `aaaabccc($)`   | `0 a 3 B 1`                  | Хотим ACC, но стек непуст
-
+`aaaabccc$`     | `0 a 3`                      | 
